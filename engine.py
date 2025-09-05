@@ -22,16 +22,14 @@ class MonteCarloEngine:
     
     def simulate_paths(self):
         dt = self.T / self.steps
-        # Precompute drift and diffusion
         drift = (self.r - 0.5 * self.sigma**2) * dt
         diffusion = self.sigma * np.sqrt(dt)
-        # Simulate random increments
+        #simulate random increments
         Z = np.random.randn(self.paths, self.steps)
         increments = drift + diffusion * Z
-        # Convert increments to price paths
+        #convert increments to price paths
         log_paths = np.cumsum(increments, axis=1)
         S_paths = self.S0 * np.exp(log_paths)
-        # Include initial price
         S_paths = np.hstack((self.S0 * np.ones((self.paths, 1)), S_paths))
         return S_paths
     
@@ -46,4 +44,18 @@ class MonteCarloEngine:
         payoff = np.maximum(K - paths[:, -1], 0)
         price = np.exp(-self.r * self.T) * np.mean(payoff)
         return price
+
+    #asian options
+    def price_asian_call(self, K):
+        paths = self.simulate_paths()
+        avg_price = np.mean(paths[:, 1:], axis=1)  #exclude S0
+        payoff = np.maximum(avg_price - K, 0)
+        price = np.exp(-self.r * self.T) * np.mean(payoff)
+        return price
+    
+    #greeks using finite diff
+    def delta_fd(self, K, h=0.01):
+        price_up = MonteCarloEngine(self.S0 + h, self.r, self.sigma, self.T, self.steps, self.paths).price_european_call(K)
+        price_down = MonteCarloEngine(self.S0 - h, self.r, self.sigma, self.T, self.steps, self.paths).price_european_call(K)
+        return (price_up - price_down) / (2*h)
 
