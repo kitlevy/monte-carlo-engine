@@ -7,7 +7,12 @@ import numpy as np
 #option for antithetic variates? read up on it
 #reuse same numbers for up and down
 #not done:
-#maybe try out numba?
+#try out numba?
+#other greeks
+#confidence intervals
+#path dependent exotics?
+#parallelize paths
+
 
 class MonteCarloEngine:
     def __init__(self, S0, r, sigma, T, steps=252, paths=100000, seed=None, antithetic=False):
