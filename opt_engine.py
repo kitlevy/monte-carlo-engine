@@ -8,7 +8,7 @@ import numpy as np
 #maybe try out numba?
 
 class MonteCarloEngine:
-    def __init__(self, S0, r, sigma, T, steps=252, paths, seed=None):
+    def __init__(self, S0, r, sigma, T, steps=252, paths, seed=None, antithetic=False):
         """
         S0: initial asset price
         r: risk-free rate
@@ -31,13 +31,15 @@ class MonteCarloEngine:
         dt = self.T / self.steps
         drift = (self.r - 0.5 * self.sigma**2) * dt
         diffusion = self.sigma * np.sqrt(dt)
-        #simulate random increments
+
         Z = np.random.randn(self.paths, self.steps)
+        if self.antithetic:
+            Z = np.vstack((Z, -Z))
+
         increments = drift + diffusion * Z
-        #convert increments to price paths
         log_paths = np.cumsum(increments, axis=1)
         S_paths = self.S0 * np.exp(log_paths)
-        S_paths = np.hstack((self.S0 * np.ones((self.paths, 1)), S_paths))
+        S_paths = np.hstack((self.S0 * np.ones((self.paths[0], 1)), S_paths))
         return S_paths
     
     def price_european_call(self, K):
